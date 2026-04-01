@@ -1,6 +1,13 @@
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    Message,
+    CallbackQuery,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+)
 
 from app.services import (
     get_active_profile_name,
@@ -34,6 +41,23 @@ def build_main_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="Residuo", callback_data="show_residuo"),
             ],
         ]
+    )
+
+
+def build_reply_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="/profilo A"), KeyboardButton(text="/profilo Y")],
+            [KeyboardButton(text="/tabella"), KeyboardButton(text="/aiuto")],
+            [KeyboardButton(text="/converti 20 pane patate")],
+            [KeyboardButton(text="/residuo 20 pane")],
+            [KeyboardButton(text="/modifica")],
+            [KeyboardButton(text="/elimina")],
+            [KeyboardButton(text="/crea")],
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=False,
+        input_field_placeholder="Scegli un comando",
     )
 
 
@@ -81,14 +105,16 @@ def build_tabella_text(profile_name: str, profile: dict) -> str:
 async def start_handler(message: Message):
     profile = get_active_profile_name()
     text = build_start_text(profile)
-    await message.answer(text, reply_markup=build_main_keyboard())
+    await message.answer(text, reply_markup=build_reply_keyboard())
+    await message.answer("Scelte rapide:", reply_markup=build_main_keyboard())
 
 
 @router.message(Command("aiuto"))
 async def aiuto_handler(message: Message):
     profile = get_active_profile_name()
     text = build_aiuto_text(profile)
-    await message.answer(text, reply_markup=build_main_keyboard())
+    await message.answer(text, reply_markup=build_reply_keyboard())
+    await message.answer("Scelte rapide:", reply_markup=build_main_keyboard())
 
 
 @router.message(Command("profilo"))
@@ -97,23 +123,32 @@ async def profilo_handler(message: Message):
 
     if len(parts) != 2:
         profiles = ", ".join(list_profiles())
-        await message.answer(f"Uso: /profilo A\nProfili disponibili: {profiles}")
+        await message.answer(
+            f"Uso: /profilo A\nProfili disponibili: {profiles}",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     name = parts[1].strip().upper()
     if name not in list_profiles():
-        await message.answer("Profilo non valido.")
+        await message.answer("Profilo non valido.", reply_markup=build_reply_keyboard())
         return
 
     set_active_profile(name)
-    await message.answer(f"Profilo attivo impostato su {name}")
+    await message.answer(
+        f"Profilo attivo impostato su {name}",
+        reply_markup=build_reply_keyboard(),
+    )
 
 
 @router.message(Command("tabella"))
 async def tabella_handler(message: Message):
     profile_name = get_active_profile_name()
     profile = get_profile(profile_name)
-    await message.answer(build_tabella_text(profile_name, profile))
+    await message.answer(
+        build_tabella_text(profile_name, profile),
+        reply_markup=build_reply_keyboard(),
+    )
 
 
 @router.message(Command("modifica"))
@@ -121,7 +156,10 @@ async def modifica_handler(message: Message):
     parts = message.text.split()
 
     if len(parts) != 5:
-        await message.answer("Uso: /modifica <gruppo> <alimento> <qty> <unit>")
+        await message.answer(
+            "Uso: /modifica <gruppo> <alimento> <qty> <unit>",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     group_name = parts[1].lower()
@@ -130,7 +168,10 @@ async def modifica_handler(message: Message):
     try:
         qty = float(parts[3].replace(",", "."))
     except ValueError:
-        await message.answer("La quantità deve essere numerica.")
+        await message.answer(
+            "La quantità deve essere numerica.",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     unit = parts[4].lower()
@@ -138,16 +179,18 @@ async def modifica_handler(message: Message):
     profile_name = get_active_profile_name()
     result, error = upsert_table_item(profile_name, group_name, item_name, qty, unit)
     if error:
-        await message.answer(error)
+        await message.answer(error, reply_markup=build_reply_keyboard())
         return
 
     if result["created"]:
         await message.answer(
-            f"Aggiunto {item_name} in [{group_name}] con {qty:.1f} {unit} (profilo {profile_name})."
+            f"Aggiunto {item_name} in [{group_name}] con {qty:.1f} {unit} (profilo {profile_name}).",
+            reply_markup=build_reply_keyboard(),
         )
     else:
         await message.answer(
-            f"Aggiornato {item_name} in [{group_name}] a {qty:.1f} {unit} (profilo {profile_name})."
+            f"Aggiornato {item_name} in [{group_name}] a {qty:.1f} {unit} (profilo {profile_name}).",
+            reply_markup=build_reply_keyboard(),
         )
 
 
@@ -156,23 +199,30 @@ async def elimina_handler(message: Message):
     parts = message.text.split()
 
     if len(parts) != 3:
-        await message.answer("Uso: /elimina <alimento> SI")
+        await message.answer(
+            "Uso: /elimina <alimento> SI",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     item_name = parts[1].lower()
     confirm = parts[2].upper()
     if confirm != "SI":
-        await message.answer("Conferma richiesta. Usa: /elimina <alimento> SI")
+        await message.answer(
+            "Conferma richiesta. Usa: /elimina <alimento> SI",
+            reply_markup=build_reply_keyboard(),
+        )
         return
     profile_name = get_active_profile_name()
 
     result, error = delete_item_from_profile(profile_name, item_name)
     if error:
-        await message.answer(error)
+        await message.answer(error, reply_markup=build_reply_keyboard())
         return
 
     await message.answer(
-        f"Eliminato {item_name} dal gruppo [{result['group']}] (profilo {profile_name})."
+        f"Eliminato {item_name} dal gruppo [{result['group']}] (profilo {profile_name}).",
+        reply_markup=build_reply_keyboard(),
     )
 
 
@@ -181,7 +231,10 @@ async def aggiungi_gruppo_handler(message: Message):
     parts = message.text.split()
 
     if len(parts) != 2:
-        await message.answer("Uso: /aggiungi-gruppo <nome>")
+        await message.answer(
+            "Uso: /aggiungi-gruppo <nome>",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     group_name = parts[1].lower()
@@ -189,11 +242,12 @@ async def aggiungi_gruppo_handler(message: Message):
 
     result, error = add_group_to_profile(profile_name, group_name)
     if error:
-        await message.answer(error)
+        await message.answer(error, reply_markup=build_reply_keyboard())
         return
 
     await message.answer(
-        f"Gruppo [{result['group']}] creato (profilo {profile_name})."
+        f"Gruppo [{result['group']}] creato (profilo {profile_name}).",
+        reply_markup=build_reply_keyboard(),
     )
 
 
@@ -202,23 +256,30 @@ async def elimina_gruppo_handler(message: Message):
     parts = message.text.split()
 
     if len(parts) != 3:
-        await message.answer("Uso: /elimina-gruppo <nome> SI")
+        await message.answer(
+            "Uso: /elimina-gruppo <nome> SI",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     group_name = parts[1].lower()
     confirm = parts[2].upper()
     if confirm != "SI":
-        await message.answer("Conferma richiesta. Usa: /elimina-gruppo <nome> SI")
+        await message.answer(
+            "Conferma richiesta. Usa: /elimina-gruppo <nome> SI",
+            reply_markup=build_reply_keyboard(),
+        )
         return
     profile_name = get_active_profile_name()
 
     result, error = delete_group_from_profile(profile_name, group_name)
     if error:
-        await message.answer(error)
+        await message.answer(error, reply_markup=build_reply_keyboard())
         return
 
     await message.answer(
-        f"Gruppo [{result['group']}] eliminato (profilo {profile_name})."
+        f"Gruppo [{result['group']}] eliminato (profilo {profile_name}).",
+        reply_markup=build_reply_keyboard(),
     )
 
 
@@ -227,13 +288,19 @@ async def converti_handler(message: Message):
     parts = message.text.split()
 
     if len(parts) != 4:
-        await message.answer("Uso: /converti 20 pane patate")
+        await message.answer(
+            "Uso: /converti 20 pane patate",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     try:
         eaten_qty = float(parts[1].replace(",", "."))
     except ValueError:
-        await message.answer("La quantità deve essere numerica.")
+        await message.answer(
+            "La quantità deve essere numerica.",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     from_item = parts[2].lower()
@@ -244,13 +311,14 @@ async def converti_handler(message: Message):
 
     result, error = convert_quantity(profile, from_item, eaten_qty, to_item)
     if error:
-        await message.answer(error)
+        await message.answer(error, reply_markup=build_reply_keyboard())
         return
 
     await message.answer(
         f"{eaten_qty:.1f} {result['from_unit']} di {from_item} equivalgono a "
         f"{result['result']:.1f} {result['to_unit']} di {to_item} "
-        f"(profilo {profile_name})."
+        f"(profilo {profile_name}).",
+        reply_markup=build_reply_keyboard(),
     )
 
 
@@ -259,13 +327,19 @@ async def residuo_handler(message: Message):
     parts = message.text.split()
 
     if len(parts) != 3:
-        await message.answer("Uso: /residuo 20 pane")
+        await message.answer(
+            "Uso: /residuo 20 pane",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     try:
         eaten_qty = float(parts[1].replace(",", "."))
     except ValueError:
-        await message.answer("La quantità deve essere numerica.")
+        await message.answer(
+            "La quantità deve essere numerica.",
+            reply_markup=build_reply_keyboard(),
+        )
         return
 
     source_item = parts[2].lower()
@@ -275,7 +349,7 @@ async def residuo_handler(message: Message):
 
     result, error = remaining_quantities(profile, source_item, eaten_qty)
     if error:
-        await message.answer(error)
+        await message.answer(error, reply_markup=build_reply_keyboard())
         return
 
     lines = [
@@ -290,7 +364,7 @@ async def residuo_handler(message: Message):
     for item_name, data in result["remaining"].items():
         lines.append(f"- {item_name}: {data['qty']:.1f} {data['unit']}")
 
-    await message.answer("\n".join(lines))
+    await message.answer("\n".join(lines), reply_markup=build_reply_keyboard())
 
 
 @router.callback_query(F.data == "show_aiuto")
