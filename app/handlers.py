@@ -1,6 +1,6 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from app.services import (
     get_active_profile_name,
@@ -18,11 +18,27 @@ from app.services import (
 router = Router()
 
 
-@router.message(Command("start"))
-@router.message(Command("help"))
-async def start_handler(message: Message):
-    profile = get_active_profile_name()
-    text = (
+def build_main_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Profilo A", callback_data="set_profile:A"),
+                InlineKeyboardButton(text="Profilo Y", callback_data="set_profile:Y"),
+            ],
+            [
+                InlineKeyboardButton(text="Tabella", callback_data="show_tabella"),
+                InlineKeyboardButton(text="Aiuto", callback_data="show_aiuto"),
+            ],
+            [
+                InlineKeyboardButton(text="Converti", callback_data="show_converti"),
+                InlineKeyboardButton(text="Residuo", callback_data="show_residuo"),
+            ],
+        ]
+    )
+
+
+def build_start_text(profile: str) -> str:
+    return (
         "Bot dieta attivo.\n\n"
         f"Profilo attuale: {profile}\n\n"
         "Comandi principali:\n"
@@ -33,13 +49,10 @@ async def start_handler(message: Message):
         "/residuo 20 pane\n\n"
         "Per la guida completa: /aiuto"
     )
-    await message.answer(text)
 
 
-@router.message(Command("aiuto"))
-async def aiuto_handler(message: Message):
-    profile = get_active_profile_name()
-    text = (
+def build_aiuto_text(profile: str) -> str:
+    return (
         "Guida completa.\n\n"
         f"Profilo attuale: {profile}\n\n"
         "/profilo A  - imposta profilo A\n"
@@ -52,7 +65,30 @@ async def aiuto_handler(message: Message):
         "/converti 20 pane patate  - conversione tra alimenti dello stesso gruppo\n"
         "/residuo 20 pane  - calcola residuo quota nel gruppo"
     )
-    await message.answer(text)
+
+
+def build_tabella_text(profile_name: str, profile: dict) -> str:
+    lines = [f"Tabella profilo {profile_name}:"]
+    for group_name, group in profile["groups"].items():
+        lines.append(f"\n[{group_name}]")
+        for item_name, item in group["items"].items():
+            lines.append(f"- {item_name}: {item['qty']} {item['unit']}")
+    return "\n".join(lines)
+
+
+@router.message(Command("start"))
+@router.message(Command("help"))
+async def start_handler(message: Message):
+    profile = get_active_profile_name()
+    text = build_start_text(profile)
+    await message.answer(text, reply_markup=build_main_keyboard())
+
+
+@router.message(Command("aiuto"))
+async def aiuto_handler(message: Message):
+    profile = get_active_profile_name()
+    text = build_aiuto_text(profile)
+    await message.answer(text, reply_markup=build_main_keyboard())
 
 
 @router.message(Command("profilo"))
@@ -77,14 +113,7 @@ async def profilo_handler(message: Message):
 async def tabella_handler(message: Message):
     profile_name = get_active_profile_name()
     profile = get_profile(profile_name)
-
-    lines = [f"Tabella profilo {profile_name}:"]
-    for group_name, group in profile["groups"].items():
-        lines.append(f"\n[{group_name}]")
-        for item_name, item in group["items"].items():
-            lines.append(f"- {item_name}: {item['qty']} {item['unit']}")
-
-    await message.answer("\n".join(lines))
+    await message.answer(build_tabella_text(profile_name, profile))
 
 
 @router.message(Command("modifica"))
@@ -262,3 +291,41 @@ async def residuo_handler(message: Message):
         lines.append(f"- {item_name}: {data['qty']:.1f} {data['unit']}")
 
     await message.answer("\n".join(lines))
+
+
+@router.callback_query(F.data == "show_aiuto")
+async def show_aiuto_callback(callback: CallbackQuery):
+    profile = get_active_profile_name()
+    await callback.message.answer(build_aiuto_text(profile), reply_markup=build_main_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "show_tabella")
+async def show_tabella_callback(callback: CallbackQuery):
+    profile_name = get_active_profile_name()
+    profile = get_profile(profile_name)
+    await callback.message.answer(build_tabella_text(profile_name, profile))
+    await callback.answer()
+
+
+@router.callback_query(F.data == "show_converti")
+async def show_converti_callback(callback: CallbackQuery):
+    await callback.message.answer("Uso: /converti 20 pane patate")
+    await callback.answer()
+
+
+@router.callback_query(F.data == "show_residuo")
+async def show_residuo_callback(callback: CallbackQuery):
+    await callback.message.answer("Uso: /residuo 20 pane")
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("set_profile:"))
+async def set_profile_callback(callback: CallbackQuery):
+    name = callback.data.split(":", 1)[1].upper()
+    if name not in list_profiles():
+        await callback.answer("Profilo non valido.", show_alert=True)
+        return
+    set_active_profile(name)
+    await callback.message.answer(f"Profilo attivo impostato su {name}")
+    await callback.answer()
