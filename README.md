@@ -20,6 +20,16 @@ Comando unico:
 make start-diet-bot
 ```
 
+## Deploy su Railway
+
+1. Crea un progetto su Railway e collega la repo.
+2. Imposta la variabile d'ambiente `BOT_TOKEN`.
+3. Fai deploy (usa Nixpacks).
+
+La repo include:
+- `railway.toml` con `startCommand`
+- `nixpacks.toml` per installare le dipendenze
+
 ## Comandi principali
 
 - `/start` o `/help`
@@ -39,4 +49,3 @@ make start-diet-bot
 ## Struttura dati
 
 I profili sono salvati in `data/profiles.json`. Il profilo attivo è salvato in `data/state.json`.
-
