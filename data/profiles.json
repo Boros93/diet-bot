@@ -1,0 +1,268 @@
+{
+  "profiles": {
+    "A": {
+      "groups": {
+        "carboidrati": {
+          "items": {
+            "pasta": {
+              "qty": 70.0,
+              "unit": "g"
+            },
+            "riso": {
+              "qty": 70,
+              "unit": "g"
+            },
+            "orzo": {
+              "qty": 70,
+              "unit": "g"
+            },
+            "farro": {
+              "qty": 70,
+              "unit": "g"
+            },
+            "couscous": {
+              "qty": 70,
+              "unit": "g"
+            },
+            "pasta di semola fresca": {
+              "qty": 80,
+              "unit": "g"
+            },
+            "pane": {
+              "qty": 70,
+              "unit": "g"
+            },
+            "piadina": {
+              "qty": 100,
+              "unit": "g"
+            },
+            "patate": {
+              "qty": 320,
+              "unit": "g"
+            },
+            "gnocchi": {
+              "qty": 160,
+              "unit": "g"
+            },
+            "polenta": {
+              "qty": 70,
+              "unit": "g"
+            }
+          }
+        },
+        "proteine": {
+          "items": {
+            "legumi secchi": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "legumi cotti": {
+              "qty": 150,
+              "unit": "g"
+            },
+            "burger di soia": {
+              "qty": 1.5,
+              "unit": "pz"
+            },
+            "polpette": {
+              "qty": 5,
+              "unit": "pz"
+            },
+            "tofu": {
+              "qty": 1,
+              "unit": "panetto"
+            },
+            "tempeh": {
+              "qty": 1,
+              "unit": "panetto"
+            },
+            "seitan": {
+              "qty": 1,
+              "unit": "panetto"
+            },
+            "formaggi freschi": {
+              "qty": 80,
+              "unit": "g"
+            },
+            "formaggi stagionati": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "uova": {
+              "qty": 2,
+              "unit": "pz"
+            },
+            "pesce": {
+              "qty": 200,
+              "unit": "g"
+            },
+            "molluschi": {
+              "qty": 250,
+              "unit": "g"
+            },
+            "carpaccio di pesce": {
+              "qty": 90,
+              "unit": "g"
+            },
+            "pollo": {
+              "qty": 180,
+              "unit": "g"
+            },
+            "tacchino": {
+              "qty": 180,
+              "unit": "g"
+            },
+            "lonza": {
+              "qty": 120,
+              "unit": "g"
+            },
+            "fettina di vitello": {
+              "qty": 120,
+              "unit": "g"
+            },
+            "salume": {
+              "qty": 70,
+              "unit": "g"
+            },
+            "tonno": {
+              "qty": 120,
+              "unit": "g"
+            }
+          }
+        }
+      }
+    },
+    "Y": {
+      "groups": {
+        "carboidrati": {
+          "items": {
+            "pasta": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "riso": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "orzo": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "farro": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "couscous": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "pasta di semola fresca": {
+              "qty": 60,
+              "unit": "g"
+            },
+            "pane": {
+              "qty": 60,
+              "unit": "g"
+            },
+            "piadina": {
+              "qty": 75,
+              "unit": "g"
+            },
+            "patate": {
+              "qty": 220,
+              "unit": "g"
+            },
+            "gnocchi": {
+              "qty": 110,
+              "unit": "g"
+            },
+            "polenta": {
+              "qty": 50,
+              "unit": "g"
+            }
+          }
+        },
+        "proteine": {
+          "items": {
+            "legumi secchi": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "legumi cotti": {
+              "qty": 150,
+              "unit": "g"
+            },
+            "burger di soia": {
+              "qty": 1,
+              "unit": "pz"
+            },
+            "polpette": {
+              "qty": 4,
+              "unit": "pz"
+            },
+            "tofu": {
+              "qty": 1,
+              "unit": "panetto"
+            },
+            "tempeh": {
+              "qty": 1,
+              "unit": "panetto"
+            },
+            "seitan": {
+              "qty": 1,
+              "unit": "panetto"
+            },
+            "formaggi magri": {
+              "qty": 70,
+              "unit": "g"
+            },
+            "formaggi grassi": {
+              "qty": 40,
+              "unit": "g"
+            },
+            "uova": {
+              "qty": 2,
+              "unit": "pz"
+            },
+            "pesce": {
+              "qty": 180,
+              "unit": "g"
+            },
+            "molluschi": {
+              "qty": 200,
+              "unit": "g"
+            },
+            "carpaccio di pesce": {
+              "qty": 80,
+              "unit": "g"
+            },
+            "pollo": {
+              "qty": 150,
+              "unit": "g"
+            },
+            "tacchino": {
+              "qty": 150,
+              "unit": "g"
+            },
+            "lonza": {
+              "qty": 100,
+              "unit": "g"
+            },
+            "fettina di vitello": {
+              "qty": 100,
+              "unit": "g"
+            },
+            "salume": {
+              "qty": 50,
+              "unit": "g"
+            },
+            "tonno": {
+              "qty": 80,
+              "unit": "g"
+            }
+          }
+        }
+      }
+    }
+  }
+}
