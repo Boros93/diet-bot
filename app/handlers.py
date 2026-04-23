@@ -1,3 +1,5 @@
+import shlex
+
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import (
@@ -23,6 +25,13 @@ from app.services import (
 )
 
 router = Router()
+
+
+def split_command_text(text: str) -> list[str] | None:
+    try:
+        return shlex.split(text)
+    except ValueError:
+        return None
 
 
 def build_main_keyboard() -> InlineKeyboardMarkup:
@@ -82,11 +91,11 @@ def build_aiuto_text(profile: str) -> str:
         "/profilo A  - imposta profilo A\n"
         "/profilo Y  - imposta profilo Y\n"
         "/tabella    - mostra la tabella del profilo attivo\n"
-        "/modifica carboidrati pane 60 g  - aggiunge/aggiorna un alimento\n"
-        "/elimina pane SI  - elimina un alimento (con conferma)\n"
+        "/modifica proteine legumi secchi 50 g  - aggiunge/aggiorna un alimento\n"
+        '/converti 20 "legumi secchi" "legumi cotti"  - usa virgolette per nomi con spazi\n'
+        "/elimina legumi secchi SI  - elimina un alimento (con conferma)\n"
         "/aggiungi-gruppo proteine  - crea un nuovo gruppo\n"
         "/elimina-gruppo proteine SI  - elimina un gruppo (con conferma)\n"
-        "/converti 20 pane patate  - conversione tra alimenti dello stesso gruppo\n"
         "/residuo 20 pane  - calcola residuo quota nel gruppo"
     )
 
@@ -119,7 +128,14 @@ async def aiuto_handler(message: Message):
 
 @router.message(Command("profilo"))
 async def profilo_handler(message: Message):
-    parts = message.text.split()
+    parts = split_command_text(message.text)
+
+    if not parts:
+        await message.answer(
+            "Comando non valido. Controlla virgolette e sintassi.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
 
     if len(parts) != 2:
         profiles = ", ".join(list_profiles())
@@ -153,9 +169,16 @@ async def tabella_handler(message: Message):
 
 @router.message(Command("modifica"))
 async def modifica_handler(message: Message):
-    parts = message.text.split()
+    parts = split_command_text(message.text)
 
-    if len(parts) != 5:
+    if not parts:
+        await message.answer(
+            "Comando non valido. Controlla virgolette e sintassi.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
+    if len(parts) < 5:
         await message.answer(
             "Uso: /modifica <gruppo> <alimento> <qty> <unit>",
             reply_markup=build_reply_keyboard(),
@@ -163,10 +186,17 @@ async def modifica_handler(message: Message):
         return
 
     group_name = parts[1].lower()
-    item_name = parts[2].lower()
+    item_name = " ".join(parts[2:-2]).strip().lower()
+
+    if not item_name:
+        await message.answer(
+            "Il nome dell'alimento non può essere vuoto.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
 
     try:
-        qty = float(parts[3].replace(",", "."))
+        qty = float(parts[-2].replace(",", "."))
     except ValueError:
         await message.answer(
             "La quantità deve essere numerica.",
@@ -174,7 +204,7 @@ async def modifica_handler(message: Message):
         )
         return
 
-    unit = parts[4].lower()
+    unit = parts[-1].lower()
 
     profile_name = get_active_profile_name()
     result, error = upsert_table_item(profile_name, group_name, item_name, qty, unit)
@@ -196,17 +226,32 @@ async def modifica_handler(message: Message):
 
 @router.message(Command("elimina"))
 async def elimina_handler(message: Message):
-    parts = message.text.split()
+    parts = split_command_text(message.text)
 
-    if len(parts) != 3:
+    if not parts:
+        await message.answer(
+            "Comando non valido. Controlla virgolette e sintassi.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
+    if len(parts) < 3:
         await message.answer(
             "Uso: /elimina <alimento> SI",
             reply_markup=build_reply_keyboard(),
         )
         return
 
-    item_name = parts[1].lower()
-    confirm = parts[2].upper()
+    item_name = " ".join(parts[1:-1]).strip().lower()
+    confirm = parts[-1].upper()
+
+    if not item_name:
+        await message.answer(
+            "Il nome dell'alimento non può essere vuoto.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
     if confirm != "SI":
         await message.answer(
             "Conferma richiesta. Usa: /elimina <alimento> SI",
@@ -228,16 +273,31 @@ async def elimina_handler(message: Message):
 
 @router.message(Command("aggiungi-gruppo"))
 async def aggiungi_gruppo_handler(message: Message):
-    parts = message.text.split()
+    parts = split_command_text(message.text)
 
-    if len(parts) != 2:
+    if not parts:
+        await message.answer(
+            "Comando non valido. Controlla virgolette e sintassi.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
+    if len(parts) < 2:
         await message.answer(
             "Uso: /aggiungi-gruppo <nome>",
             reply_markup=build_reply_keyboard(),
         )
         return
 
-    group_name = parts[1].lower()
+    group_name = " ".join(parts[1:]).strip().lower()
+
+    if not group_name:
+        await message.answer(
+            "Il nome del gruppo non può essere vuoto.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
     profile_name = get_active_profile_name()
 
     result, error = add_group_to_profile(profile_name, group_name)
@@ -253,17 +313,32 @@ async def aggiungi_gruppo_handler(message: Message):
 
 @router.message(Command("elimina-gruppo"))
 async def elimina_gruppo_handler(message: Message):
-    parts = message.text.split()
+    parts = split_command_text(message.text)
 
-    if len(parts) != 3:
+    if not parts:
+        await message.answer(
+            "Comando non valido. Controlla virgolette e sintassi.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
+    if len(parts) < 3:
         await message.answer(
             "Uso: /elimina-gruppo <nome> SI",
             reply_markup=build_reply_keyboard(),
         )
         return
 
-    group_name = parts[1].lower()
-    confirm = parts[2].upper()
+    group_name = " ".join(parts[1:-1]).strip().lower()
+    confirm = parts[-1].upper()
+
+    if not group_name:
+        await message.answer(
+            "Il nome del gruppo non può essere vuoto.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
     if confirm != "SI":
         await message.answer(
             "Conferma richiesta. Usa: /elimina-gruppo <nome> SI",
@@ -285,11 +360,18 @@ async def elimina_gruppo_handler(message: Message):
 
 @router.message(Command("converti"))
 async def converti_handler(message: Message):
-    parts = message.text.split()
+    parts = split_command_text(message.text)
+
+    if not parts:
+        await message.answer(
+            "Comando non valido. Controlla virgolette e sintassi.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
 
     if len(parts) != 4:
         await message.answer(
-            "Uso: /converti 20 pane patate",
+            'Uso: /converti 20 pane patate\nPer nomi con spazi usa le virgolette: /converti 20 "legumi secchi" "legumi cotti"',
             reply_markup=build_reply_keyboard(),
         )
         return
@@ -324,9 +406,16 @@ async def converti_handler(message: Message):
 
 @router.message(Command("residuo"))
 async def residuo_handler(message: Message):
-    parts = message.text.split()
+    parts = split_command_text(message.text)
 
-    if len(parts) != 3:
+    if not parts:
+        await message.answer(
+            "Comando non valido. Controlla virgolette e sintassi.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
+
+    if len(parts) < 3:
         await message.answer(
             "Uso: /residuo 20 pane",
             reply_markup=build_reply_keyboard(),
@@ -342,7 +431,14 @@ async def residuo_handler(message: Message):
         )
         return
 
-    source_item = parts[2].lower()
+    source_item = " ".join(parts[2:]).strip().lower()
+
+    if not source_item:
+        await message.answer(
+            "Il nome dell'alimento non può essere vuoto.",
+            reply_markup=build_reply_keyboard(),
+        )
+        return
 
     profile_name = get_active_profile_name()
     profile = get_profile(profile_name)
@@ -384,7 +480,9 @@ async def show_tabella_callback(callback: CallbackQuery):
 
 @router.callback_query(F.data == "show_converti")
 async def show_converti_callback(callback: CallbackQuery):
-    await callback.message.answer("Uso: /converti 20 pane patate")
+    await callback.message.answer(
+        'Uso: /converti 20 pane patate\nPer nomi con spazi usa le virgolette: /converti 20 "legumi secchi" "legumi cotti"'
+    )
     await callback.answer()
 
 
